@@ -1,0 +1,138 @@
+.root {
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  container-type: inline-size;
+}
+
+.ready {
+  opacity: 1;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.outerLayer,
+.romanLayer,
+.dialLayer,
+.tickLayer,
+.handLayer {
+  isolation: isolate;
+}
+
+.outerRing {
+  fill: none;
+  stroke: rgba(192, 200, 215, 0.66);
+  stroke-width: 1.2;
+}
+
+.outerHighlight {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.62);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+.outerNode {
+  stroke: rgba(255, 255, 255, 0.18);
+  stroke-width: 1;
+}
+
+.outerNodeCore,
+.centerCore {
+  fill: #5f97ff;
+}
+
+.numeral {
+  fill: rgba(174, 184, 202, 0.96);
+  font-family: "GT Standard", Arial, Helvetica, sans-serif;
+  font-size: 34px;
+  font-weight: 500;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.dialFace {
+  stroke: rgba(255, 255, 255, 0.24);
+  stroke-width: 1.2;
+}
+
+.dialInnerRing {
+  fill: none;
+  stroke: rgba(214, 220, 233, 0.44);
+  stroke-width: 1;
+}
+
+.dialWell {
+  stroke: rgba(255, 255, 255, 0.2);
+  stroke-width: 1;
+}
+
+.tickMinor,
+.tickMajor,
+.tickCardinal {
+  stroke-linecap: round;
+}
+
+.tickMinor {
+  stroke: rgba(171, 180, 198, 0.68);
+  stroke-width: 1;
+}
+
+.tickMajor {
+  stroke: rgba(126, 140, 167, 0.92);
+  stroke-width: 1.5;
+}
+
+.tickCardinal {
+  stroke: rgba(101, 118, 150, 0.96);
+  stroke-width: 2.2;
+}
+
+.handMinute,
+.handHour,
+.handSecond,
+.handSecondTip,
+.centerCap {
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 1;
+}
+
+.handMinute {
+  opacity: 0.9;
+}
+
+.handHour {
+  opacity: 0.78;
+}
+
+.handSecond {
+  stroke: rgba(155, 170, 200, 0.9);
+  stroke-width: 1.35;
+  stroke-linecap: round;
+  opacity: 0.94;
+}
+
+.handSecondTip {
+  fill: #5f97ff;
+  stroke: rgba(255, 255, 255, 0.42);
+  stroke-width: 1.1;
+}
+
+@container (max-width: 680px) {
+  .numeral {
+    font-size: 30px;
+  }
+}
+
+@container (max-width: 480px) {
+  .numeral {
+    font-size: 24px;
+  }
+}
