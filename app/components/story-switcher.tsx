@@ -1,11 +1,28 @@
 "use client";
 
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState, type CSSProperties } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { useRef, useState } from "react";
 import styles from "../page.module.css";
 
-const STORY_TRANSITION_MS = 560;
-const STORY_EASE = [0.16, 1, 0.3, 1] as const;
+const STORY_SHEET_SPRING = {
+  type: "spring" as const,
+  stiffness: 118,
+  damping: 22,
+  mass: 0.92,
+  restDelta: 0.18,
+  restSpeed: 0.18,
+};
+const TIMELINE_DOT_SPRING = {
+  type: "spring" as const,
+  stiffness: 260,
+  damping: 24,
+  mass: 0.9,
+};
+const TIMELINE_LABEL_SIZE = 13;
+const TIMELINE_GAP = 24;
+const TIMELINE_STEP = TIMELINE_LABEL_SIZE + TIMELINE_GAP;
+const TIMELINE_DOT_SIZE = 16;
+const TIMELINE_DOT_TOP_BASE = TIMELINE_LABEL_SIZE / 2 - TIMELINE_DOT_SIZE / 2;
 
 type Story = {
   id: string;
@@ -40,11 +57,13 @@ const stories: Story[] = [
   },
   {
     id: "03",
-    author: "",
-    title: "",
-    copy: "",
-    buttonLabel: "",
-    enabled: false,
+    author: "F. Scott Fitzgerald",
+    title: "The Great Gatsby",
+    copy:
+      "So we beat on, boats against the current, borne back ceaselessly into the past.",
+    buttonLabel: "Read the ending",
+    language: "en",
+    enabled: true,
   },
 ];
 
@@ -72,56 +91,61 @@ function StoryCard({ story }: StoryCardProps) {
       >
         {story.copy}
       </p>
-
-      <button type="button" className={styles.heroButton}>
-        <span>{story.buttonLabel}</span>
-        <span>↗</span>
-      </button>
     </>
   );
 }
 
+type StoryTransition = {
+  id: number;
+  fromIndex: number;
+  toIndex: number;
+  direction: 1 | -1;
+};
+
 export function StorySwitcher() {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [direction, setDirection] = useState<1 | -1>(1);
+  const [transition, setTransition] = useState<StoryTransition | null>(null);
   const shouldReduceMotion = useReducedMotion();
+  const transitionIdRef = useRef(0);
   const activeStory = stories[activeIndex];
+  const buttonStory = transition ? stories[transition.toIndex] : activeStory;
 
   const handleSelect = (nextIndex: number) => {
-    if (!stories[nextIndex]?.enabled || nextIndex === activeIndex) {
+    if (!stories[nextIndex]?.enabled || nextIndex === activeIndex || transition) {
       return;
     }
 
-    setDirection(nextIndex > activeIndex ? 1 : -1);
+    const nextDirection = nextIndex > activeIndex ? 1 : -1;
+
+    if (shouldReduceMotion) {
+      setActiveIndex(nextIndex);
+      return;
+    }
+
+    transitionIdRef.current += 1;
+    setTransition({
+      id: transitionIdRef.current,
+      fromIndex: activeIndex,
+      toIndex: nextIndex,
+      direction: nextDirection,
+    });
     setActiveIndex(nextIndex);
   };
 
-  const panelStyle = {
-    "--timeline-active-index": activeIndex,
-    "--story-card-duration": `${STORY_TRANSITION_MS}ms`,
-  } as CSSProperties;
-
-  const getInitialY = (currentDirection: 1 | -1) => {
-    if (shouldReduceMotion) {
-      return "0%";
-    }
-
-    return currentDirection > 0 ? "18%" : "-18%";
-  };
-
-  const getExitY = (currentDirection: 1 | -1) => {
-    if (shouldReduceMotion) {
-      return "0%";
-    }
-
-    return currentDirection > 0 ? "-18%" : "18%";
-  };
-
   return (
-    <section className={styles.storyPanel} style={panelStyle}>
+    <section className={styles.storyPanel}>
       <aside className={styles.timeline}>
         <div className={styles.timelineTrack}>
-          <span className={styles.timelineDot} />
+          <motion.span
+            className={styles.timelineDot}
+            initial={false}
+            animate={{
+              top: `${TIMELINE_DOT_TOP_BASE + (shouldReduceMotion ? 0 : activeIndex * TIMELINE_STEP)}px`,
+            }}
+            transition={shouldReduceMotion ? { duration: 0 } : TIMELINE_DOT_SPRING}
+          >
+            <span className={styles.timelineDotCore} />
+          </motion.span>
         </div>
 
         <div className={styles.timelineLabels}>
@@ -145,28 +169,61 @@ export function StorySwitcher() {
       <div className={styles.heroViewport}>
         <article className={styles.heroCard}>
           <div className={styles.storySheetViewport}>
-            <AnimatePresence initial={false} custom={direction} mode="sync">
+            {transition ? (
               <motion.div
-                key={activeStory.id}
-                className={styles.storySheet}
-                custom={direction}
-                initial={(currentDirection: 1 | -1) => ({
-                  y: getInitialY(currentDirection),
-                  opacity: shouldReduceMotion ? 1 : 0.92,
-                })}
-                animate={{ y: "0%", opacity: 1 }}
-                exit={(currentDirection: 1 | -1) => ({
-                  y: getExitY(currentDirection),
-                  opacity: shouldReduceMotion ? 1 : 0.92,
-                })}
-                transition={{
-                  duration: shouldReduceMotion ? 0 : STORY_TRANSITION_MS / 1000,
-                  ease: STORY_EASE,
+                key={transition.id}
+                className={styles.storyTrackStack}
+                initial={{ y: transition.direction > 0 ? "0%" : "-100%" }}
+                animate={{ y: transition.direction > 0 ? "-100%" : "0%" }}
+                transition={STORY_SHEET_SPRING}
+                onAnimationComplete={() => {
+                  setTransition((current) =>
+                    current?.id === transition.id ? null : current,
+                  );
                 }}
               >
-                <StoryCard story={activeStory} />
+                {transition.direction > 0 ? (
+                  <>
+                    <div className={styles.storyTrackFrame}>
+                      <div className={styles.storySheet}>
+                        <StoryCard story={stories[transition.fromIndex]} />
+                      </div>
+                    </div>
+                    <div className={styles.storyTrackFrame}>
+                      <div className={styles.storySheet}>
+                        <StoryCard story={stories[transition.toIndex]} />
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.storyTrackFrame}>
+                      <div className={styles.storySheet}>
+                        <StoryCard story={stories[transition.toIndex]} />
+                      </div>
+                    </div>
+                    <div className={styles.storyTrackFrame}>
+                      <div className={styles.storySheet}>
+                        <StoryCard story={stories[transition.fromIndex]} />
+                      </div>
+                    </div>
+                  </>
+                )}
               </motion.div>
-            </AnimatePresence>
+            ) : (
+              <div className={styles.storyStaticFrame}>
+                <div className={styles.storySheet}>
+                  <StoryCard story={activeStory} />
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className={styles.heroButtonDock}>
+            <button type="button" className={styles.heroButton}>
+              <span>{buttonStory.buttonLabel}</span>
+              <span>↗</span>
+            </button>
           </div>
         </article>
       </div>

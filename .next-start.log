@@ -1,0 +1,14 @@
+
+> aura-site@0.1.0 start
+> next start --port 3010
+
+▲ Next.js 16.2.4
+- Local:         http://localhost:3010
+- Network:       http://192.168.5.117:3010
+✓ Ready in 137ms
+⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+npm notice
+npm notice New minor version of npm available! 11.8.0 -> 11.12.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.12.1
+npm notice To update run: npm install -g npm@11.12.1
+npm notice
